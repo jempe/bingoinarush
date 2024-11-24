@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo Number Drawer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin-top: 20px;
+        }
+        #current-number {
+            font-size: 5em;
+            color: darkblue;
+            margin: 20px 0;
+        }
+        #number-board {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 5px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .number-cell {
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            border: 1px solid black;
+            border-radius: 5px;
+            background-color: lightgray;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .selected {
+            background-color: orange;
+            color: white;
+        }
+        button {
+            font-size: 1.2em;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bingo Number Drawer</h1>
+    <div id="current-number">-</div>
+    <button id="draw-number-btn">Draw Number</button>
+    <div id="number-board"></div>
+    <button id="reset-btn" style="margin-top: 20px; background-color: red; color: white;">Reset</button>
+
+    <script>
+        // Initialize number range and setup board
+        const totalNumbers = 75;
+        const board = document.getElementById("number-board");
+        const currentNumberDiv = document.getElementById("current-number");
+        const drawButton = document.getElementById("draw-number-btn");
+        const resetButton = document.getElementById("reset-btn");
+
+        function getBingoLetter(number) {
+            if (number >= 1 && number <= 15) return "B";
+            if (number >= 16 && number <= 30) return "I";
+            if (number >= 31 && number <= 45) return "N";
+            if (number >= 46 && number <= 60) return "G";
+            if (number >= 61 && number <= 75) return "O";
+            return "";
+        }
+
+        function initBoard() {
+            for (let i = 1; i <= totalNumbers; i++) {
+                const cell = document.createElement("div");
+                cell.className = "number-cell";
+                cell.id = `cell-${i}`;
+                cell.textContent = i;
+                board.appendChild(cell);
+            }
+        }
+
+        // Load selected numbers from localStorage
+        function loadSelectedNumbers() {
+            const selectedNumbers = JSON.parse(localStorage.getItem("selectedNumbers")) || [];
+            selectedNumbers.forEach(number => {
+                const cell = document.getElementById(`cell-${number}`);
+                if (cell) {
+                    cell.classList.add("selected");
+                }
+            });
+            return selectedNumbers;
+        }
+
+        // Save selected numbers to localStorage
+        function saveSelectedNumbers(numbers) {
+            localStorage.setItem("selectedNumbers", JSON.stringify(numbers));
+        }
+
+        // Draw a random number
+        function drawNumber() {
+            const selectedNumbers = loadSelectedNumbers();
+            const remainingNumbers = Array.from({ length: totalNumbers }, (_, i) => i + 1).filter(
+                number => !selectedNumbers.includes(number)
+            );
+
+            if (remainingNumbers.length === 0) {
+                alert("All numbers have been drawn!");
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * remainingNumbers.length);
+            const drawnNumber = remainingNumbers[randomIndex];
+            const letter = getBingoLetter(drawnNumber);
+
+            selectedNumbers.push(drawnNumber);
+            saveSelectedNumbers(selectedNumbers);
+
+            currentNumberDiv.textContent = `${letter}${drawnNumber}`;
+            const cell = document.getElementById(`cell-${drawnNumber}`);
+            if (cell) {
+                cell.classList.add("selected");
+            }
+        }
+
+        // Reset the board and clear localStorage
+        function resetBoard() {
+            if (confirm("Are you sure you want to reset the board?")) {
+                localStorage.removeItem("selectedNumbers");
+                currentNumberDiv.textContent = "-";
+                const cells = document.querySelectorAll(".number-cell");
+                cells.forEach(cell => cell.classList.remove("selected"));
+            }
+        }
+
+        // Event listeners
+        drawButton.addEventListener("click", drawNumber);
+        resetButton.addEventListener("click", resetBoard);
+
+        // Initialize
+        initBoard();
+        loadSelectedNumbers();
+    </script>
+</body>
+</html>
